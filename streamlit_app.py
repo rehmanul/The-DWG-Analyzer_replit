@@ -49,6 +49,8 @@ import os
 # Configure PostgreSQL
 os.environ['DATABASE_URL'] = 'postgresql://yang:nNTm6Q4un1aF25fmVvl7YqSzWffyznIe@dpg-d0t3rlili9vc739k84gg-a.oregon-postgres.render.com/dg4u_tiktok_bot'
 from src.ai_integration import GeminiAIAnalyzer
+from src.construction_planner import ConstructionPlanner
+from display_construction_plans import display_construction_plans
 
 # Import professional UI components (with fallback)
 try:
@@ -293,7 +295,9 @@ def get_advanced_components():
         'database':
         DatabaseManager(database_url=os.environ.get('DATABASE_URL')),
         'ai_analyzer':
-        GeminiAIAnalyzer() if os.environ.get("GEMINI_API_KEY") else None
+        GeminiAIAnalyzer() if os.environ.get("GEMINI_API_KEY") else None,
+        'construction_planner':
+        ConstructionPlanner()
     }
 
 
@@ -962,7 +966,7 @@ def display_main_interface(components):
     else:
         # Standard interface using full width
         tabs = st.tabs([
-            "Analysis Results", "Plan Visualization", "Statistics", "Export"
+            "Analysis Results", "Plan Visualization", "Construction Plans", "Statistics", "Export"
         ])
 
         with tabs[0]:
@@ -970,8 +974,10 @@ def display_main_interface(components):
         with tabs[1]:
             display_plan_visualization()
         with tabs[2]:
-            display_statistics()
+            display_construction_plans(components)
         with tabs[3]:
+            display_statistics()
+        with tabs[4]:
             generate_comprehensive_report(components)
 
 
