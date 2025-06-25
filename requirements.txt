@@ -1,0 +1,15 @@
+streamlit
+plotly
+pandas
+numpy
+matplotlib
+ezdxf
+PyMuPDF
+Pillow
+reportlab
+sqlalchemy
+psycopg2-binary>=2.9.0
+networkx
+shapely
+scipy
+python-dotenv
