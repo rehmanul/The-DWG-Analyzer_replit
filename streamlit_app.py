@@ -15,10 +15,8 @@ import tempfile
 import os
 import numpy as np
 import logging
-from dotenv import load_dotenv
-
-# Load environment variables
-load_dotenv()
+# Environment variables are handled by Streamlit Cloud secrets
+# load_dotenv() not needed in cloud deployment
 
 # Configure professional logging
 logging.basicConfig(
