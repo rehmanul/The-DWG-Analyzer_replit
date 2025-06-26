@@ -823,10 +823,20 @@ def load_uploaded_file(uploaded_file):
 
         file_size_mb = len(file_bytes) / (1024 * 1024)
 
-        # Handle large files with instant demo layouts
-        if file_size_mb > 10:  # 10MB+ files get instant demo
-            st.info(f"Large file ({file_size_mb:.1f} MB) - Creating instant demo layout")
-            zones = RobustErrorHandler.create_default_zones(uploaded_file.name, "Large file instant demo")
+        # Handle large files - try parsing first
+        if file_size_mb > 10:
+            st.info(f"Large file ({file_size_mb:.1f} MB) - Attempting quick parse...")
+            try:
+                parser = DWGParser()
+                zones = parser.parse_file(file_bytes, uploaded_file.name)
+                if zones and len(zones) > 0:
+                    st.success(f"✅ Successfully parsed {len(zones)} zones from large file {uploaded_file.name}")
+                else:
+                    zones = RobustErrorHandler.create_default_zones(uploaded_file.name, "Large file demo")
+                    st.info(f"📋 Using demo layout for large file: {len(zones)} zones")
+            except Exception:
+                zones = RobustErrorHandler.create_default_zones(uploaded_file.name, "Large file fallback")
+                st.warning(f"⚠️ Large file parsing failed, using demo layout")
             
             st.session_state.zones = zones
             st.session_state.file_loaded = True
@@ -835,7 +845,6 @@ def load_uploaded_file(uploaded_file):
             st.session_state.analysis_results = {}
             st.session_state.analysis_complete = False
             
-            st.success(f"✅ Instant demo ready with {len(zones)} zones for {uploaded_file.name}")
             return zones
 
         # Use timeout for large file processing
@@ -853,10 +862,21 @@ def load_uploaded_file(uploaded_file):
             zones = None
             parsing_method = None
             
-            # Instant processing for all files
-            zones = RobustErrorHandler.create_default_zones(uploaded_file.name, f"Demo layout for {uploaded_file.name}")
-            parsing_method = 'instant_demo'
-            st.success(f"✅ Instant layout ready: {len(zones)} zones for {uploaded_file.name}")
+            # Try actual parsing first
+            try:
+                parser = DWGParser()
+                zones = parser.parse_file(file_bytes, uploaded_file.name)
+                if zones and len(zones) > 0:
+                    parsing_method = 'real_parsing'
+                    st.success(f"✅ Parsed {len(zones)} real zones from {uploaded_file.name}")
+                else:
+                    zones = RobustErrorHandler.create_default_zones(uploaded_file.name, f"Fallback for {uploaded_file.name}")
+                    parsing_method = 'fallback_demo'
+                    st.info(f"📋 Using demo layout: {len(zones)} zones for {uploaded_file.name}")
+            except Exception as parse_error:
+                zones = RobustErrorHandler.create_default_zones(uploaded_file.name, f"Error fallback for {uploaded_file.name}")
+                parsing_method = 'error_fallback'
+                st.warning(f"⚠️ Parsing failed, using demo: {str(parse_error)[:50]}...")
 
             # Zones are already validated from RobustErrorHandler
             validated_zones = zones
