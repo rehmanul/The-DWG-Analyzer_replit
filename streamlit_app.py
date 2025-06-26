@@ -823,17 +823,29 @@ def load_uploaded_file(uploaded_file):
 
         file_size_mb = len(file_bytes) / (1024 * 1024)
 
-        # Handle large files - try parsing first
+        # Handle large files - try enhanced parsing
         if file_size_mb > 10:
-            st.info(f"Large file ({file_size_mb:.1f} MB) - Attempting quick parse...")
+            st.info(f"Large file ({file_size_mb:.1f} MB) - Using enhanced parser...")
             try:
-                parser = DWGParser()
-                zones = parser.parse_file(file_bytes, uploaded_file.name)
-                if zones and len(zones) > 0:
-                    st.success(f"✅ Successfully parsed {len(zones)} zones from large file {uploaded_file.name}")
+                with tempfile.NamedTemporaryFile(suffix='.dwg', delete=False) as tmp_file:
+                    tmp_file.write(file_bytes)
+                    tmp_path = tmp_file.name
+                
+                enhanced_parser = EnhancedDWGParser()
+                result = enhanced_parser.parse_file(tmp_path)
+                
+                if result and result.get('zones') and len(result['zones']) > 0:
+                    zones = result['zones']
+                    st.success(f"✅ Parsed {len(zones)} zones from large file using {result.get('parsing_method')}")
                 else:
                     zones = RobustErrorHandler.create_default_zones(uploaded_file.name, "Large file demo")
                     st.info(f"📋 Using demo layout for large file: {len(zones)} zones")
+                
+                try:
+                    os.unlink(tmp_path)
+                except:
+                    pass
+                    
             except Exception:
                 zones = RobustErrorHandler.create_default_zones(uploaded_file.name, "Large file fallback")
                 st.warning(f"⚠️ Large file parsing failed, using demo layout")
@@ -862,17 +874,32 @@ def load_uploaded_file(uploaded_file):
             zones = None
             parsing_method = None
             
-            # Try actual parsing first
+            # Try enhanced parsing first
             try:
-                parser = DWGParser()
-                zones = parser.parse_file(file_bytes, uploaded_file.name)
-                if zones and len(zones) > 0:
-                    parsing_method = 'real_parsing'
-                    st.success(f"✅ Parsed {len(zones)} real zones from {uploaded_file.name}")
+                # Save to temp file for enhanced parser
+                with tempfile.NamedTemporaryFile(suffix='.dwg', delete=False) as tmp_file:
+                    tmp_file.write(file_bytes)
+                    tmp_path = tmp_file.name
+                
+                # Use enhanced parser
+                enhanced_parser = EnhancedDWGParser()
+                result = enhanced_parser.parse_file(tmp_path)
+                
+                if result and result.get('zones') and len(result['zones']) > 0:
+                    zones = result['zones']
+                    parsing_method = result.get('parsing_method', 'enhanced')
+                    st.success(f"✅ Parsed {len(zones)} real zones from {uploaded_file.name} using {parsing_method}")
                 else:
                     zones = RobustErrorHandler.create_default_zones(uploaded_file.name, f"Fallback for {uploaded_file.name}")
                     parsing_method = 'fallback_demo'
                     st.info(f"📋 Using demo layout: {len(zones)} zones for {uploaded_file.name}")
+                
+                # Cleanup temp file
+                try:
+                    os.unlink(tmp_path)
+                except:
+                    pass
+                    
             except Exception as parse_error:
                 zones = RobustErrorHandler.create_default_zones(uploaded_file.name, f"Error fallback for {uploaded_file.name}")
                 parsing_method = 'error_fallback'
