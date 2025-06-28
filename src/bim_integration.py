@@ -752,7 +752,7 @@ class BIMModel:
 
     def calculate_occupancy(self) -> int:
         """Calculate total building occupancy"""
-        return sum(space['occupancy_count'] for space in the spaces)
+        return sum(space['occupancy_count'] for space in self.spaces)
 
     def validate_model(self) -> Dict[str, Any]:
         """Validate BIM model for completeness and compliance"""
