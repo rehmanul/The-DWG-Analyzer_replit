@@ -2057,11 +2057,16 @@ def load_multiple_dwg_files(uploaded_files):
 
 
 def run_advanced_analysis(components):
-    """Run comprehensive advanced AI analysis"""
+    """Run comprehensive advanced AI analysis with timeout protection"""
     try:
         with st.spinner("Running advanced AI analysis..."):
             progress_bar = st.progress(0)
             status_text = st.empty()
+            
+            # Add overall timeout protection
+            import time
+            start_time = time.time()
+            max_analysis_time = 120  # 2 minute maximum
 
             # Step 1: Advanced room classification
             status_text.text("Advanced room classification...")
@@ -2075,32 +2080,42 @@ def run_advanced_analysis(components):
             analyzer = AIAnalyzer()
             room_analysis = analyzer.analyze_room_types(st.session_state.zones)
 
-            # Enhanced AI analysis with better progress tracking
+            # Enhanced AI analysis with timeout protection
+            progress_bar.progress(35)
+            status_text.text("Enhancing with Gemini AI...")
+            
             gemini_analyzer = components.get('ai_analyzer')
+            processed = 0
+            
             if gemini_analyzer and hasattr(gemini_analyzer, 'available') and gemini_analyzer.available:
-                progress_bar.progress(35)
-                status_text.text("Enhancing with Gemini AI...")
-
-                # Process only first 5 zones to prevent timeout
-                zones_to_process = min(len(room_analysis), 5)
-                processed = 0
-
+                # Process only first 3 zones with strict timeout
+                zones_to_process = min(len(room_analysis), 3)
+                
+                import time
+                ai_start_time = time.time()
+                ai_timeout = 15  # 15 second timeout for AI processing
+                
                 for i, (zone_name, room_info) in enumerate(list(room_analysis.items())[:zones_to_process]):
+                    # Check timeout
+                    if time.time() - ai_start_time > ai_timeout:
+                        logger.warning("AI processing timeout - proceeding with basic classification")
+                        break
+                        
                     try:
-                        # Update progress for each zone
-                        current_progress = 35 + (i * 10)  # Progress from 35% to 75%
-                        progress_bar.progress(min(current_progress, 75))
+                        # Update progress
+                        current_progress = 35 + (i * 15)  # Progress from 35% to 80%
+                        progress_bar.progress(min(current_progress, 80))
                         status_text.text(f"AI analyzing zone {i+1}/{zones_to_process}...")
 
-                        # Quick AI enhancement
+                        # Quick AI enhancement with timeout
                         zone_index = int(zone_name.split('_')[-1]) if '_' in zone_name else 0
 
                         if 0 <= zone_index < len(st.session_state.zones):
                             zone_data = st.session_state.zones[zone_index]
                             
-                            # Use the fixed AI analyzer
+                            # Use AI analyzer with quick timeout
                             ai_result = gemini_analyzer.analyze_room_type(zone_data)
-                            if ai_result.get('type'):
+                            if ai_result and ai_result.get('type'):
                                 room_info['ai_type'] = ai_result.get('type', room_info.get('type', 'Unknown'))
                                 room_info['ai_confidence'] = ai_result.get('confidence', room_info.get('confidence', 0.7))
                                 room_info['type'] = ai_result.get('type')  # Update main type
@@ -2109,27 +2124,41 @@ def run_advanced_analysis(components):
                     except Exception as e:
                         logger.warning(f"AI enhancement skipped for {zone_name}: {e}")
                         continue  # Keep original classification
-
+                
+                # Ensure we move past AI processing
+                progress_bar.progress(80)
                 status_text.text(f"Gemini AI enhanced {processed} zones")
                 logger.info(f"AI enhanced {processed} zones")
+            else:
+                # Skip AI enhancement if not available
+                progress_bar.progress(80)
+                status_text.text("Using standard classification (AI not available)")
+
+            # Check timeout
+            if time.time() - start_time > max_analysis_time:
+                raise TimeoutError("Analysis timeout - please try with a smaller file")
 
             # Step 2: Semantic space analysis
             status_text.text("Semantic space analysis...")
-            progress_bar.progress(40)
+            progress_bar.progress(85)
 
             semantic_analyzer = components.get('semantic_analyzer')
             if semantic_analyzer:
-                space_graph = semantic_analyzer.build_space_graph(
-                    st.session_state.zones, room_analysis)
-                spatial_relationships = semantic_analyzer.analyze_spatial_relationships(
-                )
+                try:
+                    space_graph = semantic_analyzer.build_space_graph(
+                        st.session_state.zones, room_analysis)
+                    spatial_relationships = semantic_analyzer.analyze_spatial_relationships()
+                except Exception as e:
+                    logger.warning(f"Semantic analysis failed: {e}")
+                    space_graph = {}
+                    spatial_relationships = {}
             else:
                 space_graph = {}
                 spatial_relationships = {}
 
             # Step 3: Advanced optimization
             status_text.text("Advanced optimization...")
-            progress_bar.progress(60)
+            progress_bar.progress(88)
 
             optimization_engine = components['optimization_engine']
 
@@ -2166,33 +2195,28 @@ def run_advanced_analysis(components):
                 except:
                     optimization_results = {'total_efficiency': 0.85}
 
-            # Step 4: Save to database
-            status_text.text("Saving to database...")
-            progress_bar.progress(80)
-
-            db_manager = components['database']
+            # Step 4: Finalize results
+            status_text.text("Finalizing analysis...")
+            progress_bar.progress(90)
 
             # Compile comprehensive results
             results = {
-                'rooms':
-                room_analysis,
-                'placements':
-                placement_analysis,
-                'spatial_relationships':
-                spatial_relationships,
-                'optimization':
-                optimization_results,
-                'parameters':
-                params,
-                'total_boxes':
-                sum(len(spots) for spots in placement_analysis.values()),
-                'analysis_type':
-                'advanced',
-                'timestamp':
-                datetime.now().isoformat()
+                'rooms': room_analysis,
+                'placements': placement_analysis,
+                'spatial_relationships': spatial_relationships,
+                'optimization': optimization_results,
+                'parameters': params,
+                'total_boxes': sum(len(spots) for spots in placement_analysis.values()),
+                'analysis_type': 'advanced',
+                'timestamp': datetime.now().isoformat()
             }
 
-            # Save analysis to database if available
+            # Save to session state
+            st.session_state.analysis_results = results
+            st.session_state.analysis_complete = True
+
+            # Optional database save (don't block completion)
+            db_manager = components.get('database')
             if db_manager and 'current_project_id' in st.session_state:
                 try:
                     analysis_id = db_manager.save_analysis_results(
@@ -2200,18 +2224,20 @@ def run_advanced_analysis(components):
                         params, results)
                     results['analysis_id'] = analysis_id
                 except Exception as e:
-                    st.warning(f"Could not save to database: {str(e)}")
+                    logger.warning(f"Could not save to database: {str(e)}")
 
-            st.session_state.analysis_results = results
-
+            # Complete progress
             progress_bar.progress(100)
-            progress_bar.empty()
-            status_text.empty()
+            status_text.text("Analysis complete!")
 
             # Show completion summary
             total_zones = len(st.session_state.zones)
             total_boxes = results.get('total_boxes', 0)
             efficiency = results.get('optimization', {}).get('total_efficiency', 0.85) * 100
+            
+            # Clear progress indicators
+            progress_bar.empty()
+            status_text.empty()
             
             st.success(f"""
             🎉 **Advanced Analysis Complete!**
@@ -2219,10 +2245,10 @@ def run_advanced_analysis(components):
             ✅ **{total_zones} zones** analyzed  
             ✅ **{total_boxes} optimal placements** found  
             ✅ **{efficiency:.1f}% efficiency** achieved  
-            ✅ **Gemini AI** room classification applied
+            ✅ **{processed} zones** enhanced with AI
             """)
             
-            # Auto-refresh to show results
+            # Force refresh to show results
             st.rerun()
 
     except Exception as e:
