@@ -1,4 +1,5 @@
 import os
+import sqlalchemy
 from sqlalchemy import create_engine, Column, String, DateTime, Text, Float, Integer, Boolean, JSON, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
@@ -187,7 +188,8 @@ class DatabaseManager:
             self.engine = create_engine(DATABASE_URL, pool_pre_ping=True)
             # Test connection
             with self.engine.connect() as conn:
-                conn.execute('SELECT 1')
+                result = conn.execute(sqlalchemy.text('SELECT 1'))
+                result.fetchone()
             Base.metadata.create_all(self.engine)
             self.Session = sessionmaker(bind=self.engine)
             print("✅ PostgreSQL database connected successfully")
