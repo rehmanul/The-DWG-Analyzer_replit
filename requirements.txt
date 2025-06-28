@@ -18,5 +18,5 @@ networkx>=3.0.0
 deap>=1.4.0
 PyMuPDF>=1.23.0
 google-generativeai
-python-dotenv
+python-dotenv>=1.0.0
 tarsafe

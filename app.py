@@ -16,6 +16,16 @@ import os
 import numpy as np
 import logging
 
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+    print("✅ Environment variables loaded from .env file")
+except ImportError:
+    print("⚠️ python-dotenv not installed, using system environment variables")
+except Exception as e:
+    print(f"⚠️ Could not load .env file: {e}")
+
 # Configure professional logging
 logging.basicConfig(
     level=logging.INFO,
