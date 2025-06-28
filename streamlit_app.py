@@ -915,6 +915,8 @@ def load_uploaded_file(uploaded_file):
         max_size_mb = 200  # Standard limit for Replit deployment
 
         if file_size_mb > max_size_mb:
+            st.error(f"File too large: {file_size_mb:.1f} MB. Maximum allowed: {max_size_mb} MB")
+            return None
 
             # Show file info
             st.info(f"Processing {file_ext.upper()} file: {file_size_mb:.1f} MB")
