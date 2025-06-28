@@ -2463,8 +2463,7 @@ def main():
             display_integrated_control_panel(components)
         elif st.session_state.analysis_results:
             # Always show results in main area when available
-            ```tool_code
-display_main_interface(components)
+            display_main_interface(components)
         elif st.session_state.zones:
             # Show analysis interface when zones loaded but no results yet
             st.info("File loaded successfully! Click 'Run Analysis' to analyze the zones.")
