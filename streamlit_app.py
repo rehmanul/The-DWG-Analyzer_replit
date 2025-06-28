@@ -2452,7 +2452,7 @@ def main():
             run_ai_analysis(2.0, 1.5, 0.5, 0.7, True, True)
     elif action == 'view_results' or sidebar_action == 'view_results':
         nav_manager.update_navigation_state('results')
-    elif action == 'export_cad or sidebar_action == 'export_cad':
+    elif action == 'export_cad' or sidebar_action == 'export_cad':
         nav_manager.update_navigation_state('export')
 
     # Header with mode toggle
