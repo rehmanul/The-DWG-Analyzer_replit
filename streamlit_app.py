@@ -1,20 +1,17 @@
+import os
+import sys
 import streamlit as st
+import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-import pandas as pd
 from datetime import datetime
-from src.export_utils import ExportManager
 import json
-import io
-import math
-from pathlib import Path
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
-from matplotlib.patches import Polygon as MplPolygon
-import asyncio
 import tempfile
-import os
-import numpy as np
+from pathlib import Path
+import zipfile
+
+# Set Gemini API key directly
+os.environ['GEMINI_API_KEY'] = 'AIzaSyA8xJHDlXLOr_f3DWaZ3PV3Ke_bvCcPHRE'
 import logging
 # Environment variables are handled by Streamlit Cloud secrets
 # load_dotenv() not needed in cloud deployment
@@ -99,7 +96,7 @@ try:
 except ImportError as e:
     logger.warning(f"Some advanced features not available: {e}")
     ADVANCED_FEATURES_AVAILABLE = False
-    
+
     # Create fallback classes to prevent import errors
     class BIMModelGenerator:
         def create_bim_model_from_analysis(self, zones, analysis_results, metadata):
@@ -109,15 +106,15 @@ except ImportError as e:
                     'spaces': {'compliant_spaces': len(zones)}
                 }
             })()
-    
+
     class AdvancedRoomClassifier:
         def batch_classify(self, zones):
             return {i: {'room_type': 'Office', 'confidence': 0.7} for i in range(len(zones))}
-    
+
     class SemanticSpaceAnalyzer:
         def build_space_graph(self, zones, analysis): return {}
         def analyze_spatial_relationships(self): return {}
-    
+
     class MultiFloorAnalyzer: pass
     class OptimizationEngine:
         def optimize_furniture_placement(self, zones, params):
@@ -138,15 +135,15 @@ def _get_ai_analyzer():
 
         def optimize_furniture_placement(self, zones, params):
             return {'total_efficiency': 0.85, 'optimization_method': 'basic_fallback'}
-    
+
     class FurnitureCatalogManager:
         def recommend_furniture_for_space(self, space_type, space_area, budget, sustainability_preference):
             return type('Config', (), {'total_cost': space_area * 100, 'total_items': int(space_area / 5), 'sustainability_score': 0.8})()
-    
+
     class CADExporter:
         def create_technical_drawing_package(self, zones, analysis_results, temp_dir):
             return {}
-    
+
     class CollaborationManager: pass
     class TeamPlanningInterface: pass
 
@@ -2083,27 +2080,27 @@ def run_advanced_analysis(components):
             if gemini_analyzer and hasattr(gemini_analyzer, 'available') and gemini_analyzer.available:
                 progress_bar.progress(35)
                 status_text.text("Enhancing with Gemini AI...")
-                
+
                 # Process only first 10 zones to prevent timeout
                 zones_to_process = min(len(room_analysis), 10)
                 processed = 0
-                
+
                 for zone_name, room_info in list(room_analysis.items())[:zones_to_process]:
                     try:
                         # Quick AI enhancement with timeout
                         zone_index = int(zone_name.split('_')[-1]) if '_' in zone_name else 0
-                        
+
                         if 0 <= zone_index < len(st.session_state.zones):
                             zone_data = st.session_state.zones[zone_index]
-                            
+
                             # Add timeout protection
                             import signal
                             def timeout_handler(signum, frame):
                                 raise TimeoutError("AI analysis timeout")
-                            
+
                             signal.signal(signal.SIGALRM, timeout_handler)
                             signal.alarm(5)  # 5 second timeout per zone
-                            
+
                             try:
                                 ai_result = gemini_analyzer.analyze_room_type(zone_data)
                                 room_info['ai_type'] = ai_result.get('type', room_info.get('type', 'Unknown'))
@@ -2111,15 +2108,15 @@ def run_advanced_analysis(components):
                                 processed += 1
                             finally:
                                 signal.alarm(0)
-                                
+
                     except (TimeoutError, Exception) as e:
                         logger.warning(f"AI enhancement skipped for {zone_name}: {e}")
                         continue  # Keep original classification
-                    
+
                     # Update progress
                     if processed >= 5:  # Limit AI processing
                         break
-                
+
                 logger.info(f"AI enhanced {processed} zones")
 
             # Step 2: Semantic space analysis
@@ -2466,7 +2463,8 @@ def main():
             display_integrated_control_panel(components)
         elif st.session_state.analysis_results:
             # Always show results in main area when available
-            display_main_interface(components)
+            ```tool_code
+display_main_interface(components)
         elif st.session_state.zones:
             # Show analysis interface when zones loaded but no results yet
             st.info("File loaded successfully! Click 'Run Analysis' to analyze the zones.")
@@ -2663,7 +2661,7 @@ def run_ai_analysis(box_length, box_width, margin, confidence_threshold,
             # Create progress bar
             progress_bar = st.progress(0)
             status_text = st.empty()
-            
+
             # Add timeout protection
             import time
             start_time = time.time()
@@ -2675,17 +2673,17 @@ def run_ai_analysis(box_length, box_width, margin, confidence_threshold,
             # Step 1: Room type analysis
             status_text.text("Analyzing room types...")
             progress_bar.progress(25)
-            
+
             # Check timeout
             if time.time() - start_time > timeout_seconds:
                 raise TimeoutError("Analysis timeout")
-                
+
             room_analysis = analyzer.analyze_room_types(st.session_state.zones)
 
             # Step 2: Furniture placement analysis
             status_text.text("Calculating optimal placements...")
             progress_bar.progress(50)
-            
+
             # Check timeout again
             if time.time() - start_time > timeout_seconds:
                 raise TimeoutError("Analysis timeout")
