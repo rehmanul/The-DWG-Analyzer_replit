@@ -19,7 +19,7 @@ class MultiAIAnalyzer:
         services = {}
 
         # Google Gemini
-        gemini_key = os.environ.get("AIzaSyA8xJHDlXLOr_f3DWaZ3PV3Ke_bvCcPHRE")
+        gemini_key = os.environ.get("GEMINI_API_KEY")
         if gemini_key:
             try:
                 import google.generativeai as genai
@@ -118,66 +118,62 @@ class GeminiAIAnalyzer(MultiAIAnalyzer):
 
 
     def analyze_room_type(self, zone_data: Dict) -> Dict:
-        """Analyze room type using Gemini AI"""
-        if not self.available:
-            return {
-                'room_type': 'Unknown',
-                'confidence': 0.5,
-                'reasoning': 'Gemini AI not available'
-            }
+        """Analyze room type using Gemini AI with timeout protection"""
+        if not self.available or not self.model:
+            return self._fallback_room_classification(zone_data)
 
         try:
-            # Prepare zone description for AI analysis
-            zone_description = f"""
-            Room Analysis Request:
-            - Area: {zone_data.get('area', 0):.2f} square meters
-            - Perimeter: {zone_data.get('perimeter', 0):.2f} meters
-            - Dimensions: {zone_data.get('bounds', 'Unknown')}
-            - Layer: {zone_data.get('layer', 'Unknown')}
-
-            Based on these architectural measurements, classify this room type and provide confidence score.
-            """
-            response = self.model.generate_content(
-                zone_description,
-                generation_config=genai.types.GenerationConfig(
-                    temperature=0.7,
-                    top_p=1,
-                    top_k=1,
-                    max_output_tokens=2048
+            # Quick timeout for API calls
+            import signal
+            
+            def timeout_handler(signum, frame):
+                raise TimeoutError("Gemini API timeout")
+            
+            # Set 10 second timeout
+            signal.signal(signal.SIGALRM, timeout_handler)
+            signal.alarm(10)
+            
+            try:
+                # Simplified prompt for faster response
+                area = zone_data.get('area', 0)
+                prompt = f"Classify room type for {area:.1f} sq meters. Return: Office, Meeting Room, Storage, Corridor, or Bathroom"
+                
+                response = self.model.generate_content(
+                    prompt,
+                    generation_config=genai.types.GenerationConfig(
+                        temperature=0.3,
+                        max_output_tokens=50
+                    )
                 )
-            )
-            if response.text:
-                try:
-                    result = json.loads(response.text)
-                    return {
-                        'type': result.get('room_type', 'Unknown'),
-                        'confidence': result.get('confidence', 0.7),
-                        'reasoning': 'AI analysis based on dimensions'
-                    }
-                except json.JSONDecodeError:
-                    # Fallback parsing
-                    text = response.text.lower()
-                    if 'bedroom' in text:
-                        room_type = 'Bedroom'
-                    elif 'kitchen' in text:
-                        room_type = 'Kitchen'
-                    elif 'bathroom' in text:
-                        room_type = 'Bathroom'
-                    elif 'living' in text:
-                        room_type = 'Living Room'
-                    elif 'office' in text:
-                        room_type = 'Office'
-                    else:
-                        room_type = 'General Space'
+            finally:
+                signal.alarm(0)  # Cancel timeout
+            if response and response.text:
+                # Simple text parsing - no JSON needed
+                text = response.text.lower()
+                room_type = 'Office'  # Default
+                confidence = 0.8
+                
+                if 'meeting' in text:
+                    room_type = 'Meeting Room'
+                elif 'storage' in text or 'closet' in text:
+                    room_type = 'Storage'
+                elif 'corridor' in text or 'hallway' in text:
+                    room_type = 'Corridor'
+                elif 'bathroom' in text or 'restroom' in text:
+                    room_type = 'Bathroom'
+                elif 'office' in text:
+                    room_type = 'Office'
 
-                    return {
-                        'type': room_type,
-                        'confidence': 0.8,
-                        'reasoning': 'AI text analysis'
-                    }
+                return {
+                    'type': room_type,
+                    'confidence': confidence,
+                    'reasoning': 'Gemini AI classification'
+                }
 
+        except TimeoutError:
+            print("Gemini AI timeout - using fallback")
         except Exception as e:
-            print(f"Gemini AI analysis error: {e}")
+            print(f"Gemini AI error: {e}")
 
         # Fallback analysis based on area
         return self._fallback_room_classification(zone_data)

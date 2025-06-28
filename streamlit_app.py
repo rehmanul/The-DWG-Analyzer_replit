@@ -49,7 +49,8 @@ import os
 
 # Configure PostgreSQL and Gemini API
 os.environ['DATABASE_URL'] = 'postgresql://yang:nNTm6Q4un1aF25fmVvl7YqSzWffyznIe@dpg-d0t3rlili9vc739k84gg-a.oregon-postgres.render.com/dg4u_tiktok_bot'
-os.environ['GEMINI_API_KEY'] = 'AIzaSyA8xJHDlXLOr_f3DWaZ3PV3Ke_bvCcPHRE'
+# Gemini API key should be set in Replit Secrets, not hardcoded
+# os.environ['GEMINI_API_KEY'] = 'your_api_key_here'
 from src.ai_integration import GeminiAIAnalyzer
 from src.construction_planner import ConstructionPlanner
 from display_construction_plans import display_construction_plans
@@ -2058,30 +2059,49 @@ def run_advanced_analysis(components):
             analyzer = AIAnalyzer()
             room_analysis = analyzer.analyze_room_types(st.session_state.zones)
 
-            # If Gemini AI is available, enhance with AI insights
+            # Enhanced AI analysis with timeout protection
             gemini_analyzer = components.get('ai_analyzer')
-            if gemini_analyzer and gemini_analyzer.available:
-                for zone_name, room_info in room_analysis.items():
+            if gemini_analyzer and hasattr(gemini_analyzer, 'available') and gemini_analyzer.available:
+                progress_bar.progress(35)
+                status_text.text("Enhancing with Gemini AI...")
+                
+                # Process only first 10 zones to prevent timeout
+                zones_to_process = min(len(room_analysis), 10)
+                processed = 0
+                
+                for zone_name, room_info in list(room_analysis.items())[:zones_to_process]:
                     try:
-                        # Safer zone index extraction
-                        if '_' in zone_name:
-                            zone_index_str = zone_name.split('_')[-1]
-                            zone_index = int(zone_index_str)
-                        else:
-                            zone_index = 0
-
-                        # Safe zone access
+                        # Quick AI enhancement with timeout
+                        zone_index = int(zone_name.split('_')[-1]) if '_' in zone_name else 0
+                        
                         if 0 <= zone_index < len(st.session_state.zones):
                             zone_data = st.session_state.zones[zone_index]
-                            ai_result = gemini_analyzer.analyze_room_type(zone_data)
-
-                            # Enhance with AI insights
-                            room_info['ai_type'] = ai_result.get('type', room_info.get('type', 'Unknown'))
-                            room_info['ai_confidence'] = ai_result.get('confidence', room_info.get('confidence', 0.7))
-                            room_info['reasoning'] = ai_result.get('reasoning', 'Geometric analysis')
-                    except Exception as e:
-                        logger.warning(f"AI enhancement failed for {zone_name}: {e}")
-                        pass  # Keep original classification if AI fails
+                            
+                            # Add timeout protection
+                            import signal
+                            def timeout_handler(signum, frame):
+                                raise TimeoutError("AI analysis timeout")
+                            
+                            signal.signal(signal.SIGALRM, timeout_handler)
+                            signal.alarm(5)  # 5 second timeout per zone
+                            
+                            try:
+                                ai_result = gemini_analyzer.analyze_room_type(zone_data)
+                                room_info['ai_type'] = ai_result.get('type', room_info.get('type', 'Unknown'))
+                                room_info['ai_confidence'] = ai_result.get('confidence', room_info.get('confidence', 0.7))
+                                processed += 1
+                            finally:
+                                signal.alarm(0)
+                                
+                    except (TimeoutError, Exception) as e:
+                        logger.warning(f"AI enhancement skipped for {zone_name}: {e}")
+                        continue  # Keep original classification
+                    
+                    # Update progress
+                    if processed >= 5:  # Limit AI processing
+                        break
+                
+                logger.info(f"AI enhanced {processed} zones")
 
             # Step 2: Semantic space analysis
             status_text.text("Semantic space analysis...")
@@ -2618,12 +2638,17 @@ def load_dwg_file(file_input):
 # Keep existing functions for backward compatibility
 def run_ai_analysis(box_length, box_width, margin, confidence_threshold,
                     enable_rotation, smart_spacing):
-    """Run AI analysis on loaded zones"""
+    """Run AI analysis on loaded zones with timeout protection"""
     try:
         with st.spinner("🤖 Running AI analysis..."):
             # Create progress bar
             progress_bar = st.progress(0)
             status_text = st.empty()
+            
+            # Add timeout protection
+            import time
+            start_time = time.time()
+            timeout_seconds = 60  # 1 minute timeout
 
             # Initialize AI analyzer
             analyzer = AIAnalyzer(confidence_threshold)
@@ -2631,11 +2656,20 @@ def run_ai_analysis(box_length, box_width, margin, confidence_threshold,
             # Step 1: Room type analysis
             status_text.text("Analyzing room types...")
             progress_bar.progress(25)
+            
+            # Check timeout
+            if time.time() - start_time > timeout_seconds:
+                raise TimeoutError("Analysis timeout")
+                
             room_analysis = analyzer.analyze_room_types(st.session_state.zones)
 
             # Step 2: Furniture placement analysis
             status_text.text("Calculating optimal placements...")
             progress_bar.progress(50)
+            
+            # Check timeout again
+            if time.time() - start_time > timeout_seconds:
+                raise TimeoutError("Analysis timeout")
 
             params = {
                 'box_size': (box_length, box_width),
