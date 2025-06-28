@@ -140,30 +140,45 @@ class GeminiAIAnalyzer(MultiAIAnalyzer):
             return self._fallback_room_classification(zone_data)
 
         try:
-            # Quick timeout for API calls
-            import signal
+            # Use threading timeout instead of signal for Streamlit compatibility
+            import threading
+            import time
+            
+            result = {'response': None, 'error': None}
+            
+            def ai_task():
+                try:
+                    # Simplified prompt for faster response
+                    area = zone_data.get('area', 0)
+                    prompt = f"Classify room type for {area:.1f} sq meters. Return: Office, Meeting Room, Storage, Corridor, or Bathroom"
 
-            def timeout_handler(signum, frame):
-                raise TimeoutError("Gemini API timeout")
-
-            # Set 10 second timeout
-            signal.signal(signal.SIGALRM, timeout_handler)
-            signal.alarm(10)
-
-            try:
-                # Simplified prompt for faster response
-                area = zone_data.get('area', 0)
-                prompt = f"Classify room type for {area:.1f} sq meters. Return: Office, Meeting Room, Storage, Corridor, or Bathroom"
-
-                response = self.model.generate_content(
-                    prompt,
-                    generation_config=genai.types.GenerationConfig(
-                        temperature=0.3,
-                        max_output_tokens=50
+                    response = self.model.generate_content(
+                        prompt,
+                        generation_config=genai.types.GenerationConfig(
+                            temperature=0.3,
+                            max_output_tokens=50
+                        )
                     )
-                )
-            finally:
-                signal.alarm(0)  # Cancel timeout
+                    result['response'] = response
+                except Exception as e:
+                    result['error'] = str(e)
+            
+            # Run AI task in thread with timeout
+            thread = threading.Thread(target=ai_task)
+            thread.daemon = True
+            thread.start()
+            thread.join(timeout=8)  # 8 second timeout
+            
+            if thread.is_alive():
+                # Timeout occurred
+                print("Gemini AI timeout - using fallback")
+                return self._fallback_room_classification(zone_data)
+            
+            if result['error']:
+                print(f"Gemini AI error: {result['error']}")
+                return self._fallback_room_classification(zone_data)
+            
+            response = result['response']
             if response and response.text:
                 # Simple text parsing - no JSON needed
                 text = response.text.lower()
