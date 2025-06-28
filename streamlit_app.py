@@ -862,8 +862,7 @@ def _calculate_zone_area(zone):
 def _calculate_centroid(zone):
     """Calculate centroid from zone points"""
     try:
-        points = zone.get('points')```python
- or zone.get('polygon', [])
+        points = zone.get('points') or zone.get('polygon', [])
         if not points:
             return (0, 0)
 
