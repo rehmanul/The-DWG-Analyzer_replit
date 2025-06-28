@@ -20,29 +20,34 @@ logger = logging.getLogger(__name__)
 
 def check_dependencies():
     """Check if required dependencies are installed"""
-    required_packages = [
-        'streamlit',
-        'ezdxf',
-        'plotly',
-        'pandas',
-        'numpy',
-        'matplotlib',
-        'shapely',
-        'scikit-learn'
-    ]
+    # Map package names to their import names
+    package_imports = {
+        'streamlit': 'streamlit',
+        'ezdxf': 'ezdxf',
+        'plotly': 'plotly',
+        'pandas': 'pandas',
+        'numpy': 'numpy',
+        'matplotlib': 'matplotlib',
+        'shapely': 'shapely',
+        'scikit-learn': 'sklearn'
+    }
     
     missing_packages = []
-    for package in required_packages:
+    for package_name, import_name in package_imports.items():
         try:
-            __import__(package)
+            __import__(import_name)
         except ImportError:
-            missing_packages.append(package)
+            missing_packages.append(package_name)
     
     if missing_packages:
         logger.error(f"Missing required packages: {missing_packages}")
-        logger.info("Installing missing packages...")
-        subprocess.check_call([sys.executable, '-m', 'pip', 'install'] + missing_packages)
-        logger.info("Package installation completed")
+        logger.info("All required packages should be available via pyproject.toml dependencies")
+        logger.info("If packages are missing, they should be installed automatically by the Nix environment")
+        # Don't try to install via pip in Nix environment
+        return False
+    
+    logger.info("All required dependencies are available")
+    return True
 
 def run_streamlit_app():
     """Run the main Streamlit application"""
@@ -76,8 +81,10 @@ def main():
     """Main entry point"""
     logger.info("AI Architectural Space Analyzer PRO - Starting...")
     
-    # Check dependencies
-    check_dependencies()
+    # Check dependencies - continue even if some are missing
+    dependencies_ok = check_dependencies()
+    if not dependencies_ok:
+        logger.warning("Some dependencies may be missing, but continuing anyway...")
     
     # Set environment variables if not set
     if not os.environ.get('DATABASE_URL'):
