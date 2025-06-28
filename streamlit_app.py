@@ -9,6 +9,7 @@ import json
 import tempfile
 from pathlib import Path
 import zipfile
+import math
 
 # Set Gemini API key directly
 os.environ['GEMINI_API_KEY'] = 'AIzaSyA8xJHDlXLOr_f3DWaZ3PV3Ke_bvCcPHRE'
@@ -504,7 +505,7 @@ def display_integrated_control_panel(components):
         elif is_local:
             st.success(f"✅ **Local Version**: Maximum {max_size_mb} MB file size supported.")
         else:
-            st.success(f"🌍 **Web Version**: Maximum {max_size_mb} MB file size supported.")
+            st.success(f"🌍 **Web Version**: Maximum {max_size_mb} file size supported.")
 
         with st.expander("📏 File Size Guidelines"):
             is_local = 'localhost' in str(st.get_option('browser.serverAddress')) or st.get_option('server.port') == 5001
@@ -861,7 +862,8 @@ def _calculate_zone_area(zone):
 def _calculate_centroid(zone):
     """Calculate centroid from zone points"""
     try:
-        points = zone.get('points') or zone.get('polygon', [])
+        points = zone.get('points')```python
+ or zone.get('polygon', [])
         if not points:
             return (0, 0)
 
@@ -1441,10 +1443,11 @@ def display_furniture_catalog(components):
                      for config in st.session_state.furniture_configurations)
     total_items = sum(config.total_items
                       for config in st.session_state.furniture_configurations)
-    avg_sustainability = np.mean([
-        config.sustainability_score
-        for config in st.session_state.furniture_configurations
-    ])
+    sustainability_scores = [
+                config.sustainability_score
+                for config in st.session_state.furniture_configurations
+            ]
+    avg_sustainability = sum(sustainability_scores) / len(sustainability_scores) if sustainability_scores else 0
 
     col1, col2, col3 = st.columns(3)
     with col1:
@@ -1612,7 +1615,8 @@ def generate_simple_svg(zones, include_furniture=True):
             area = zone.get('area', 0)
 
             svg_content += f'<text x="{label_x:.1f}" y="{label_y:.1f}" class="room-label">{room_name}</text>\n'
-            svg_content += f'<text x="{label_x:.1f}" y="{label_y + 15:.1f}" class="area-label">{area:.1f} m²</text>\n'
+            ```python
+svg_content += f'<text x="{label_x:.1f}" y="{label_y + 15:.1f}" class="area-label">{area:.1f} m²</text>\n'
 
     # Add furniture if requested
     if include_furniture and st.session_state.analysis_results:
@@ -2449,7 +2453,7 @@ def main():
             run_ai_analysis(2.0, 1.5, 0.5, 0.7, True, True)
     elif action == 'view_results' or sidebar_action == 'view_results':
         nav_manager.update_navigation_state('results')
-    elif action == 'export_cad' or sidebar_action == 'export_cad':
+    elif action == 'export_cad or sidebar_action == 'export_cad':
         nav_manager.update_navigation_state('export')
 
     # Header with mode toggle
@@ -2818,10 +2822,10 @@ def display_analysis_results():
             dimensions = room_info.get('dimensions', [0, 0])
             try:
                 if isinstance(dimensions, (list, tuple)) and len(dimensions) >= 2:
-                    dim_str = f"{dimensions[0]:.1f} × {dimensions[1]:.1f}"
+                    dim_str = f"{float(dimensions[0]):.1f} × {float(dimensions[1]):.1f}"
                 else:
                     # Calculate from area if dimensions missing
-                    area = room_info.get('area', 0)
+                    area = float(room_info.get('area', 0))
                     if area > 0:
                         side_length = math.sqrt(area)
                         dim_str = f"{side_length:.1f} × {side_length:.1f}"
@@ -3086,7 +3090,7 @@ def generate_report():
         **Analysis Complete**: {results.get('total_boxes', 0)} optimal box placements found
 
         **Room Analysis**: {len(results.get('rooms', {}))} rooms analyzed
-        - Average confidence: {np.mean([r.get('confidence', 0.0) for r in results.get('rooms', {}).values()]):.1%}
+        - Average confidence: {sum(float(info.get('confidence', 0.0)) for info in results.get('rooms', {}).values()) / len(results.get('rooms', {})) if results.get('rooms', {}) else 0:.1%}
 
         **Box Parameters**: {results.get('parameters', {}).get('box_size', [2.0, 1.5])[0]}m × {results.get('parameters', {}).get('box_size', [2.0, 1.5])[1]}m
 

@@ -1,8 +1,10 @@
 import io
 import json
+import math
 from datetime import datetime
 from typing import Dict, List, Any
 import pandas as pd
+import numpy as np
 from reportlab.lib.pagesizes import letter, A4
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle

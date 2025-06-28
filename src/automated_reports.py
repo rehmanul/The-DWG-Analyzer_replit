@@ -6,6 +6,8 @@ from datetime import datetime
 import json
 from typing import Dict, List, Any
 import pandas as pd
+import numpy as np
+import math
 
 class AutomatedReportGenerator:
     def __init__(self):
