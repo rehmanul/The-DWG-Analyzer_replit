@@ -1,0 +1,81 @@
+{
+  "timestamp": "2025-06-28T08:44:40.556920",
+  "project": "AI Architectural Space Analyzer PRO",
+  "checks": {
+    "python_version": {
+      "status": "PASS",
+      "details": "Python 3.11.10"
+    },
+    "dependencies": {
+      "status": "FAIL",
+      "details": {
+        "installed": [
+          "streamlit",
+          "ezdxf",
+          "shapely",
+          "matplotlib",
+          "plotly",
+          "pandas",
+          "numpy",
+          "reportlab",
+          "rectpack",
+          "scipy",
+          "sqlalchemy",
+          "pydantic",
+          "networkx",
+          "deap",
+          "tarsafe"
+        ],
+        "missing": [
+          "opencv-python-headless",
+          "scikit-learn",
+          "psycopg2-binary",
+          "google-generativeai",
+          "PyMuPDF",
+          "google-generativeai",
+          "python-dotenv"
+        ]
+      }
+    },
+    "file_structure": {
+      "status": "PASS",
+      "details": {
+        "existing": [
+          "main.py",
+          "streamlit_app.py",
+          "requirements.txt",
+          "src/__init__.py",
+          "src/ai_integration.py",
+          "src/dwg_parser.py",
+          "src/navigation_manager.py"
+        ],
+        "missing": []
+      }
+    },
+    "environment_variables": {
+      "status": "PASS",
+      "details": {
+        "DATABASE_URL": null,
+        "GEMINI_API_KEY": false,
+        "PORT": "5000"
+      }
+    },
+    "streamlit_config": {
+      "status": "FAIL",
+      "details": "Streamlit config missing"
+    },
+    "import_test": {
+      "status": "PASS",
+      "details": {
+        "successful": [
+          "streamlit",
+          "src.ai_integration",
+          "src.dwg_parser",
+          "src.navigation_manager"
+        ],
+        "failed": []
+      }
+    }
+  },
+  "overall_status": "ISSUES_FOUND"
+}
