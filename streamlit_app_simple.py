@@ -48,8 +48,9 @@ from src.optimization import PlacementOptimizer
 from src.database import DatabaseManager
 import os
 
-# Configure PostgreSQL
+# Configure PostgreSQL and Gemini API
 os.environ['DATABASE_URL'] = 'postgresql://yang:nNTm6Q4un1aF25fmVvl7YqSzWffyznIe@dpg-d0t3rlili9vc739k84gg-a.oregon-postgres.render.com/dg4u_tiktok_bot'
+os.environ['GEMINI_API_KEY'] = 'AIzaSyA8xJHDlXLOr_f3DWaZ3PV3Ke_bvCcPHRE'
 from src.ai_integration import GeminiAIAnalyzer
 
 # Configure page
