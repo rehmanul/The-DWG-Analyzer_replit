@@ -1081,4 +1081,4 @@ class DWGParser:
 
         except Exception as e:
             # Suppress repeated error messages for cleaner console output
-            return Noneeturn None
+            return None
