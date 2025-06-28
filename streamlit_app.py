@@ -49,8 +49,11 @@ import os
 
 # Configure PostgreSQL and Gemini API
 os.environ['DATABASE_URL'] = 'postgresql://yang:nNTm6Q4un1aF25fmVvl7YqSzWffyznIe@dpg-d0t3rlili9vc739k84gg-a.oregon-postgres.render.com/dg4u_tiktok_bot'
-# Gemini API key should be set in Replit Secrets, not hardcoded
-# os.environ['GEMINI_API_KEY'] = 'your_api_key_here'
+
+# Gemini API key should be set in Replit Secrets
+# To configure: Go to Secrets tab → Add GEMINI_API_KEY → Restart app
+if not os.environ.get('GEMINI_API_KEY'):
+    st.sidebar.warning("⚠️ Gemini AI not configured. Add GEMINI_API_KEY to Secrets to enable AI features.")
 from src.ai_integration import GeminiAIAnalyzer
 from src.construction_planner import ConstructionPlanner
 from display_construction_plans import display_construction_plans
