@@ -557,38 +557,32 @@ def display_integrated_control_panel(components):
                         • **Split drawing**: Divide into smaller sections
                         """)
                         st.info("💾 See README_TUNNEL.md for detailed instructions on handling large files.")
-                    st.stop()
+                else:
+                    # File size is acceptable, show load options
+                    col_a, col_b = st.columns([2, 1])
+                    with col_a:
+                        st.write(f"📄 **{uploaded_file.name}** ({file_size_mb:.1f} MB)")
+                        # Dynamic warning based on deployment
+                        warning_threshold = 50 if is_local else 5
 
-            except Exception as e:
-                st.error(f"⚠️ File validation error: {str(e)}")
-                st.info("💡 Try refreshing the page and uploading again.")
-                st.stop()
+                        if file_size_mb > warning_threshold:
+                            st.warning("⏰ Large file detected. Processing may take longer.")
 
-                col_a, col_b = st.columns([2, 1])
-                with col_a:
-                    st.write(f"📄 **{uploaded_file.name}** ({file_size_mb:.1f} MB)")
-                    # Dynamic warning based on deployment
-                    is_local = 'localhost' in str(st.get_option('browser.serverAddress')) or st.get_option('server.port') == 5001
-                    warning_threshold = 50 if is_local else 5
-
-                    if file_size_mb > warning_threshold:
-                        st.warning("⏰ Large file detected. Processing may take longer.")
-
-                with col_b:
-                    if st.button("Load File",
-                                 type="primary",
-                                 use_container_width=True,
-                                 key="load_uploaded_file_btn"):
-                        try:
-                            with st.spinner("Loading file..."):
-                                zones = load_uploaded_file(uploaded_file)
-                                if zones and len(zones) > 0:
-                                    st.success(f"✅ Successfully loaded {len(zones)} zones from {uploaded_file.name}")
-                                    st.rerun()
-                                else:
-                                    st.error("❌ Failed to load file or no zones found")
-                        except Exception as e:
-                            st.error(f"❌ Upload error: {str(e)}")
+                    with col_b:
+                        if st.button("Load File",
+                                     type="primary",
+                                     use_container_width=True,
+                                     key="load_uploaded_file_btn"):
+                            try:
+                                with st.spinner("Loading file..."):
+                                    zones = load_uploaded_file(uploaded_file)
+                                    if zones and len(zones) > 0:
+                                        st.success(f"✅ Successfully loaded {len(zones)} zones from {uploaded_file.name}")
+                                        st.rerun()
+                                    else:
+                                        st.error("❌ Failed to load file or no zones found")
+                            except Exception as e:
+                                st.error(f"❌ Upload error: {str(e)}")
 
             except Exception as e:
                 st.error(f"⚠️ File validation error: {str(e)}")
