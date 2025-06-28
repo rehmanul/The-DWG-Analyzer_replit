@@ -560,9 +560,9 @@ def display_integrated_control_panel(components):
             try:
                 file_bytes = uploaded_file.getvalue()
                 file_size_mb = len(file_bytes) / (1024 * 1024)
-        max_size_mb = 200  # Standard limit for Replit deployment
+                max_size_mb = 200  # Standard limit for Replit deployment
 
-        if file_size_mb > max_size_mb:
+                if file_size_mb > max_size_mb:
                     st.error(f"⚠️ File too large: {file_size_mb:.1f} MB. Maximum allowed: {max_size_mb} MB")
                     if not is_local:
                         st.markdown("""
