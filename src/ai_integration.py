@@ -19,7 +19,7 @@ class MultiAIAnalyzer:
         services = {}
 
         # Google Gemini
-        gemini_key = "AIzaSyA8xJHDlXLOr_f3DWaZ3PV3Ke_bvCcPHRE"
+        gemini_key = os.environ.get("AIzaSyA8xJHDlXLOr_f3DWaZ3PV3Ke_bvCcPHRE")
         if gemini_key:
             try:
                 import google.generativeai as genai
@@ -110,7 +110,7 @@ class GeminiAIAnalyzer(MultiAIAnalyzer):
 
     def __init__(self):
         super().__init__()
-        self.api_key = "AIzaSyA8xJHDlXLOr_f3DWaZ3PV3Ke_bvCcPHRE"
+        self.api_key = os.environ.get("GEMINI_API_KEY")
         if 'gemini' in self.services:
             self.model = self.services['gemini']['model']
         else:
