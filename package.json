@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "stream": "node stream-server.js",
-    "dev": "nodemon server.js"
+    "dev": "node server.js",
+    "install-dev": "npm install nodemon --save-dev && npm run dev"
   },
   "dependencies": {
     "fluent-ffmpeg": "^2.1.2",

@@ -117,6 +117,20 @@ except ImportError as e:
     
     class MultiFloorAnalyzer: pass
     class OptimizationEngine:
+
+
+def _get_ai_analyzer():
+    """Safely initialize AI analyzer with error handling"""
+    try:
+        if os.environ.get("GEMINI_API_KEY"):
+            analyzer = GeminiAIAnalyzer()
+            return analyzer if analyzer.available else None
+        return None
+    except Exception as e:
+        logger.warning(f"Failed to initialize AI analyzer: {e}")
+        return None
+
+
         def optimize_furniture_placement(self, zones, params):
             return {'total_efficiency': 0.85, 'optimization_method': 'basic_fallback'}
     
@@ -277,7 +291,7 @@ def get_advanced_components():
         'database':
         DatabaseManager(database_url=os.environ.get('DATABASE_URL')),
         'ai_analyzer':
-        GeminiAIAnalyzer() if os.environ.get("GEMINI_API_KEY") else None,
+        _get_ai_analyzer(),
         'construction_planner':
         ConstructionPlanner()
     }

@@ -3,6 +3,9 @@ import json
 import google.generativeai as genai
 import numpy as np
 from typing import Dict, List, Any
+import logging
+
+logger = logging.getLogger(__name__)
 
 class MultiAIAnalyzer:
     """
@@ -111,10 +114,24 @@ class GeminiAIAnalyzer(MultiAIAnalyzer):
     def __init__(self):
         super().__init__()
         self.api_key = os.environ.get("GEMINI_API_KEY")
-        if 'gemini' in self.services:
-            self.model = self.services['gemini']['model']
+        self.available = False
+        self.model = None
+
+        if self.api_key:
+            try:
+                import google.generativeai as genai
+                genai.configure(api_key=self.api_key)
+                self.model = genai.GenerativeModel('gemini-pro')
+                self.available = True
+                logger.info("Gemini AI analyzer initialized successfully")
+            except ImportError:
+                logger.warning("google.generativeai package not installed - Gemini AI disabled")
+                self.available = False
+            except Exception as e:
+                logger.warning(f"Failed to initialize Gemini AI: {e}")
+                self.available = False
         else:
-            self.model = None
+            logger.info("Gemini AI not available - API key not configured")
 
 
     def analyze_room_type(self, zone_data: Dict) -> Dict:
@@ -125,19 +142,19 @@ class GeminiAIAnalyzer(MultiAIAnalyzer):
         try:
             # Quick timeout for API calls
             import signal
-            
+
             def timeout_handler(signum, frame):
                 raise TimeoutError("Gemini API timeout")
-            
+
             # Set 10 second timeout
             signal.signal(signal.SIGALRM, timeout_handler)
             signal.alarm(10)
-            
+
             try:
                 # Simplified prompt for faster response
                 area = zone_data.get('area', 0)
                 prompt = f"Classify room type for {area:.1f} sq meters. Return: Office, Meeting Room, Storage, Corridor, or Bathroom"
-                
+
                 response = self.model.generate_content(
                     prompt,
                     generation_config=genai.types.GenerationConfig(
@@ -152,7 +169,7 @@ class GeminiAIAnalyzer(MultiAIAnalyzer):
                 text = response.text.lower()
                 room_type = 'Office'  # Default
                 confidence = 0.8
-                
+
                 if 'meeting' in text:
                     room_type = 'Meeting Room'
                 elif 'storage' in text or 'closet' in text:
