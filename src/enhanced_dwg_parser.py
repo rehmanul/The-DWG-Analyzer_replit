@@ -250,39 +250,9 @@ class EnhancedDWGParser:
             raise Exception(f"Fallback parsing failed: {e}")
 
     def _extract_zones_from_binary(self, content: bytes) -> List[Dict]:
-        """Extract zones from binary content (simplified)"""
-        # This is a very basic implementation
-        # In a real scenario, you'd need proper DWG binary parsing
-        zones = []
-
-        # Create some reasonable default zones based on file size
-        file_size = len(content)
-        num_zones = min(max(file_size // 10000, 2), 8)  # 2-8 zones based on file size
-
-        for i in range(num_zones):
-            # Create rectangular zones
-            x = i * 400
-            y = 0
-            width = 300 + (i * 50)
-            height = 200 + (i * 30)
-
-            zone = {
-                'id': i,
-                'polygon': [
-                    (x, y),
-                    (x + width, y),
-                    (x + width, y + height),
-                    (x, y + height)
-                ],
-                'area': width * height,
-                'centroid': (x + width/2, y + height/2),
-                'layer': '0',
-                'zone_type': f'Room_{i+1}',
-                'parsing_method': 'binary_analysis'
-            }
-            zones.append(zone)
-
-        return zones
+        """Extract zones from binary content - only return real data"""
+        # No fake zones - return empty list if cannot parse
+        return []
 
     def _create_intelligent_fallback(self, file_path: str) -> Dict[str, Any]:
         """Create intelligent fallback zones"""

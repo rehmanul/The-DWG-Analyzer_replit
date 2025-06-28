@@ -899,7 +899,7 @@ def load_uploaded_file(uploaded_file):
             if is_local:
                 st.error(f"File too large: {file_size_mb:.1f} MB. Maximum allowed: {max_size_mb} MB.")
             else:
-                st.error(f"File too large: {file_size_mb:.1f} MB. Maximum allowed: {max_size_mb} MB for web deployment.")
+                st.error(f"File too large: {file_size_mb:.1f} MB. Maximum allowed: {max_size_mb} for web deployment.")
                 st.info("💡 For larger files, run the app locally or use file compression.")
             return None
 

@@ -64,26 +64,13 @@ class AIAnalyzer:
                         'centroid': zone.get('centroid', (width/2, height/2))
                     }
                 else:
-                    # Fallback for invalid geometry
-                    area = zone.get('area', 100.0)
-                    room_analysis[f"Zone_{i}"] = {
-                        'type': 'Office',
-                        'confidence': 0.6,
-                        'area': area,
-                        'dimensions': [math.sqrt(area), math.sqrt(area)],
-                        'layer': zone.get('layer', '0')
-                    }
+                    # Skip zones with invalid geometry - no fake data
+                    continue
                     
             except Exception as e:
-                # Robust error handling
-                room_analysis[f"Zone_{i}"] = {
-                    'type': 'Unknown',
-                    'confidence': 0.3,
-                    'area': 50.0,
-                    'dimensions': [7, 7],
-                    'layer': zone.get('layer', '0'),
-                    'error': str(e)[:100]
-                }
+                # Skip zones that cannot be analyzed - no fake data
+                logger.warning(f"Failed to analyze zone {i}: {e}")
+                continue
         
         return room_analysis
     
