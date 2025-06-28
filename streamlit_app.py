@@ -1614,8 +1614,7 @@ def generate_simple_svg(zones, include_furniture=True):
             area = zone.get('area', 0)
 
             svg_content += f'<text x="{label_x:.1f}" y="{label_y:.1f}" class="room-label">{room_name}</text>\n'
-            ```python
-svg_content += f'<text x="{label_x:.1f}" y="{label_y + 15:.1f}" class="area-label">{area:.1f} m²</text>\n'
+            svg_content += f'<text x="{label_x:.1f}" y="{label_y + 15:.1f}" class="area-label">{area:.1f} m²</text>\n'
 
     # Add furniture if requested
     if include_furniture and st.session_state.analysis_results:
