@@ -558,7 +558,7 @@ def display_integrated_control_panel(components):
         if uploaded_file is not None:
             # Validate file immediately
             try:
-                file_size_mb = uploaded_file.size / (1024 * 1024)
+                file_bytes = uploaded_file.getvalue()
                 file_size_mb = len(file_bytes) / (1024 * 1024)
         max_size_mb = 200  # Standard limit for Replit deployment
 
@@ -918,8 +918,8 @@ def load_uploaded_file(uploaded_file):
             st.error(f"File too large: {file_size_mb:.1f} MB. Maximum allowed: {max_size_mb} MB")
             return None
 
-            # Show file info
-            st.info(f"Processing {file_ext.upper()} file: {file_size_mb:.1f} MB")
+        # Show file info
+        st.info(f"Processing {file_ext.upper()} file: {file_size_mb:.1f} MB")
 
         # Handle large files with streaming and memory optimization
         if file_size_mb > 10:  # Threshold for large file handling
