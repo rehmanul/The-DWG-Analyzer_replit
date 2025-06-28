@@ -130,7 +130,7 @@ def load_uploaded_file(uploaded_file):
         st.session_state.file_loaded = True
         st.session_state.current_file = "fallback_file"
         st.warning(f"Created emergency fallback layout with {len(zones)} zones")
-        return zones
+        return zonesn zones
 
 def run_ai_analysis(box_length, box_width, margin, confidence_threshold, enable_rotation, smart_spacing):
     """Run AI analysis on loaded zones"""

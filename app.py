@@ -44,6 +44,10 @@ from src.optimization import PlacementOptimizer
 from src.database import DatabaseManager
 from src.ai_integration import GeminiAIAnalyzer
 
+# Configure database with environment variable fallback
+if 'DATABASE_URL' not in os.environ:
+    os.environ['DATABASE_URL'] = 'sqlite:///local_database.db'
+
 # Import professional UI components (with fallback)
 try:
     from professional_ui import ProfessionalUI, DataVisualization

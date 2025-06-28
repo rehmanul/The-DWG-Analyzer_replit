@@ -799,6 +799,41 @@ class DWGParser:
     def _parse_text_based_zones(self, modelspace) -> List[Dict]:
         """Parse zones based on text labels and surrounding geometry"""
         zones = []
+        try:
+            # Find text entities
+            text_entities = [entity for entity in modelspace if entity.dxftype() == 'TEXT']
+            
+            for i, text_entity in enumerate(text_entities):
+                # Create a zone around each text entity
+                insert_point = text_entity.dxf.insert
+                x, y = insert_point[0], insert_point[1]
+                
+                # Create a rectangular zone around the text
+                zone_size = 50  # Default zone size
+                points = [
+                    (x - zone_size/2, y - zone_size/2),
+                    (x + zone_size/2, y - zone_size/2),
+                    (x + zone_size/2, y + zone_size/2),
+                    (x - zone_size/2, y + zone_size/2)
+                ]
+                
+                zone = {
+                    'id': i,
+                    'points': points,
+                    'polygon': points,
+                    'area': zone_size * zone_size,
+                    'centroid': (x, y),
+                    'zone_type': 'Room',
+                    'layer': getattr(text_entity.dxf, 'layer', '0'),
+                    'text_content': text_entity.dxf.text
+                }
+                zones.append(zone)
+                
+        except Exception as e:
+            print(f"Error parsing text-based zones: {e}")
+            
+        return zones
+        zones = []
 
         # Find text entities that might be room labels
         room_texts = []
@@ -1046,4 +1081,4 @@ class DWGParser:
 
         except Exception as e:
             # Suppress repeated error messages for cleaner console output
-            return None
+            return Noneeturn None

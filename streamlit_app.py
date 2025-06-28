@@ -131,10 +131,10 @@ class FurnitureCatalogManager:
 class CADExporter:
     def export_to_dxf(self, zones, results, path, **kwargs):
         pass
-    
+
     def export_to_svg(self, zones, results, path):
         pass
-    
+
     def create_technical_drawing_package(self, zones, results, temp_dir):
         return {}
 
@@ -477,7 +477,7 @@ def display_integrated_control_panel(components):
 
     with col1:
         st.subheader("📁 Upload DWG/DXF File")
-        
+
         # Dynamic file size info based on deployment
         try:
             server_addr = str(st.get_option('browser.serverAddress') or '')
@@ -485,27 +485,27 @@ def display_integrated_control_panel(components):
         except:
             server_addr = ''
             server_port = 8501
-        
+
         is_local = 'localhost' in server_addr or server_port == 5001
         is_tunnel = 'devtunnels.ms' in server_addr or 'ngrok' in server_addr
-        
+
         if is_tunnel:
             max_size_mb = 1000  # Tunnel deployment increased
         elif is_local:
             max_size_mb = 500   # Local deployment increased
         else:
             max_size_mb = 200   # Web deployment increased
-        
+
         if is_tunnel:
             st.success(f"🌐 **Tunnel Deployment**: Maximum {max_size_mb} MB file size supported.")
         elif is_local:
             st.success(f"✅ **Local Version**: Maximum {max_size_mb} MB file size supported.")
         else:
             st.success(f"🌍 **Web Version**: Maximum {max_size_mb} MB file size supported.")
-        
+
         with st.expander("📏 File Size Guidelines"):
             is_local = 'localhost' in str(st.get_option('browser.serverAddress')) or st.get_option('server.port') == 5001
-            
+
             if is_local:
                 st.markdown("""
                 **Local Deployment (Current):**
@@ -520,28 +520,28 @@ def display_integrated_control_panel(components):
                 • Maximum: 10 MB
                 • Recommended: 1-5 MB
                 • Best performance: Under 2 MB
-                
+
                 **Local Deployment:**
                 • Maximum: 190 MB
                 • Full feature support
                 • No size restrictions
-                
+
                 **Tips for Large Files:**
                 • Use our file compressor: `python -m streamlit run compress_dwg.py`
                 • Remove unnecessary layers/entities
                 • Split complex drawings into sections
                 """)
-                
+
                 if st.button("Run File Compressor"):
                     st.info("To run the compressor, execute this command in your terminal:\n\n`python -m streamlit run compress_dwg.py`")
 
         # Dynamic file uploader text
         is_local = 'localhost' in str(st.get_option('browser.serverAddress')) or st.get_option('server.port') == 5001
         max_size_mb = 190 if is_local else 10
-        
+
         # File format tabs
         file_tabs = st.tabs(["DWG/DXF Files", "PDF Converter"])
-        
+
         uploaded_file = None
         with file_tabs[0]:
             uploaded_file = st.file_uploader(
@@ -550,7 +550,7 @@ def display_integrated_control_panel(components):
                 help=f"{'Local deployment' if is_local else 'Web deployment'} limit: {max_size_mb} MB.",
                 key="main_file_uploader",
                 accept_multiple_files=False)
-        
+
         with file_tabs[1]:
             from src.pdf_to_dwg_converter import display_pdf_converter
             display_pdf_converter()
@@ -559,25 +559,10 @@ def display_integrated_control_panel(components):
             # Validate file immediately
             try:
                 file_size_mb = uploaded_file.size / (1024 * 1024)
-                # Dynamic file size check
-                try:
-                    server_addr = str(st.get_option('browser.serverAddress') or '')
-                    server_port = st.get_option('server.port')
-                except:
-                    server_addr = ''
-                    server_port = 8501
-                
-                is_local = 'localhost' in server_addr or server_port == 5001
-                is_tunnel = 'devtunnels.ms' in server_addr or 'ngrok' in server_addr
-                
-                if is_tunnel:
-                    max_size_mb = 1000
-                elif is_local:
-                    max_size_mb = 500
-                else:
-                    max_size_mb = 200
-                
-                if file_size_mb > max_size_mb:
+                file_size_mb = len(file_bytes) / (1024 * 1024)
+        max_size_mb = 200  # Standard limit for Replit deployment
+
+        if file_size_mb > max_size_mb:
                     st.error(f"⚠️ File too large: {file_size_mb:.1f} MB. Maximum allowed: {max_size_mb} MB")
                     if not is_local:
                         st.markdown("""
@@ -595,7 +580,7 @@ def display_integrated_control_panel(components):
                     # Dynamic warning based on deployment
                     is_local = 'localhost' in str(st.get_option('browser.serverAddress')) or st.get_option('server.port') == 5001
                     warning_threshold = 50 if is_local else 5
-                    
+
                     if file_size_mb > warning_threshold:
                         st.warning("⏰ Large file detected. Processing may take longer.")
 
@@ -859,7 +844,7 @@ def _calculate_zone_area(zone):
         points = zone.get('points') or zone.get('polygon', [])
         if len(points) < 3:
             return 100.0  # Default area
-        
+
         # Shoelace formula
         area = 0.0
         n = len(points)
@@ -877,7 +862,7 @@ def _calculate_centroid(zone):
         points = zone.get('points') or zone.get('polygon', [])
         if not points:
             return (0, 0)
-        
+
         x = sum(p[0] for p in points) / len(points)
         y = sum(p[1] for p in points) / len(points)
         return (x, y)
@@ -901,12 +886,12 @@ def load_uploaded_file(uploaded_file):
         if file_ext not in ['dwg', 'dxf']:
             st.error(f"Unsupported file format: {file_ext}. Please upload DWG or DXF files only.")
             return None
-        
+
         # Dynamic file size limit based on deployment
         is_local = 'localhost' in st.get_option('browser.serverAddress') or '127.0.0.1' in st.get_option('browser.serverAddress') or st.get_option('server.port') == 5001
         max_size_mb = 190 if is_local else 10
         max_size_bytes = max_size_mb * 1024 * 1024
-        
+
         if len(file_bytes) > max_size_bytes:
             if is_local:
                 st.error(f"File too large: {file_size_mb:.1f} MB. Maximum allowed: {max_size_mb} MB.")
@@ -927,18 +912,21 @@ def load_uploaded_file(uploaded_file):
             return None
 
         file_size_mb = len(file_bytes) / (1024 * 1024)
-        
-        # Show file info
-        st.info(f"Processing {file_ext.upper()} file: {file_size_mb:.1f} MB")
+        max_size_mb = 200  # Standard limit for Replit deployment
+
+        if file_size_mb > max_size_mb:
+
+            # Show file info
+            st.info(f"Processing {file_ext.upper()} file: {file_size_mb:.1f} MB")
 
         # Handle large files with streaming and memory optimization
         if file_size_mb > 10:  # Threshold for large file handling
             st.info(f"Large file ({file_size_mb:.1f} MB) - Optimizing for size...")
-            
+
             # Memory optimization for large files
             import gc
             gc.collect()
-            
+
             try:
                 # Stream write to temp file to avoid memory issues
                 with tempfile.NamedTemporaryFile(suffix=f'.{file_ext}', delete=False) as tmp_file:
@@ -948,7 +936,7 @@ def load_uploaded_file(uploaded_file):
                         chunk = file_bytes[i:i + chunk_size]
                         tmp_file.write(chunk)
                     tmp_path = tmp_file.name
-                
+
                 # Use appropriate parser based on file extension
                 if file_ext == 'dxf':
                     # DXF files - use ezdxf directly for better performance
@@ -956,14 +944,14 @@ def load_uploaded_file(uploaded_file):
                         import ezdxf
                         doc = ezdxf.readfile(tmp_path)
                         zones = []
-                        
+
                         # Extract entities efficiently
                         entity_count = 0
                         for entity in doc.modelspace():
                             entity_count += 1
                             if entity_count > 10000:  # Limit for performance
                                 break
-                                
+
                             if entity.dxftype() in ['LWPOLYLINE', 'POLYLINE']:
                                 if hasattr(entity, 'get_points'):
                                     try:
@@ -980,88 +968,88 @@ def load_uploaded_file(uploaded_file):
                                             zones.append(zone)
                                     except:
                                         continue
-                        
+
                         if zones:
                             st.success(f"✅ Parsed {len(zones)} real zones from large DXF file")
                         else:
                             st.error("No zones detected in DXF file")
                             return None
-                            
+
                     except Exception as dxf_error:
                         st.error(f"DXF parsing failed: {str(dxf_error)[:100]}...")
                         return None
-                        
+
                 else:
                     # DWG files - use enhanced parser
                     enhanced_parser = EnhancedDWGParser()
                     result = enhanced_parser.parse_file(tmp_path)
-                    
+
                     if result and result.get('zones') and len(result['zones']) > 0:
                         zones = result['zones']
                         st.success(f"✅ Parsed {len(zones)} real zones using {result.get('parsing_method')}")
                     else:
                         st.error("No zones detected in DWG file")
                         return None
-                
+
                 # Cleanup
                 try:
                     os.unlink(tmp_path)
                 except:
                     pass
-                    
+
                 # Memory cleanup
                 gc.collect()
-                    
+
             except Exception as e:
                 st.error(f"Large file processing error: {str(e)[:100]}...")
                 st.info("Unable to process this file. Try using the PDF converter or a different file format.")
                 return None
-            
+
             st.session_state.zones = zones
             st.session_state.file_loaded = True
             st.session_state.current_file = uploaded_file.name
             st.session_state.dwg_loaded = True
             st.session_state.analysis_results = {}
             st.session_state.analysis_complete = False
-            
+
             return zones
 
         # Use timeout for large file processing
         import signal
         import threading
-        
+
         def timeout_handler():
             st.error("File processing timeout. Please try a smaller file or simpler DWG format.")
             return None
-        
+
         # Set processing timeout based on file size
         timeout_seconds = min(30, max(10, int(file_size_mb * 2)))  # 2 seconds per MB, max 30s
-        
+
         with st.spinner(f"Processing {uploaded_file.name} ({file_size_mb:.1f} MB)... Timeout: {timeout_seconds}s"):
             zones = None
             parsing_method = None
-            
+
             # Try optimized parsing first
             try:
                 # Memory optimization
                 import gc
                 gc.collect()
-                
+
                 # Save to temp file with proper extension
                 with tempfile.NamedTemporaryFile(suffix=f'.{file_ext}', delete=False) as tmp_file:
                     tmp_file.write(file_bytes)
                     tmp_path = tmp_file.name
-                
+
                 zones = None
                 parsing_method = 'unknown'
-                
+
                 # Try DXF-specific parsing first for DXF files
                 if file_ext == 'dxf':
                     try:
                         import ezdxf
                         doc = ezdxf.readfile(tmp_path)
                         zones = []
-                        
+
                         for entity in doc.modelspace():
                             if entity.dxftype() in ['LWPOLYLINE', 'POLYLINE']:
                                 if hasattr(entity, 'get_points'):
@@ -1075,7 +1063,7 @@ def load_uploaded_file(uploaded_file):
                                                 area += points[i][0] * points[j][1]
                                                 area -= points[j][0] * points[i][1]
                                             area = abs(area) / 2
-                                            
+
                                             zone = {
                                                 'id': len(zones),
                                                 'points': [(p[0], p[1]) for p in points],
@@ -1086,39 +1074,39 @@ def load_uploaded_file(uploaded_file):
                                             zones.append(zone)
                                     except:
                                         continue
-                        
+
                         if zones:
                             parsing_method = 'ezdxf_direct'
                             st.success(f"✅ Parsed {len(zones)} zones from DXF using direct ezdxf")
                     except Exception as dxf_error:
                         zones = None
                         st.info(f"Direct DXF parsing failed, trying enhanced parser...")
-                
+
                 # If DXF direct parsing failed or it's a DWG file, use enhanced parser
                 if not zones:
                     enhanced_parser = EnhancedDWGParser()
                     result = enhanced_parser.parse_file(tmp_path)
-                    
+
                     if result and result.get('zones') and len(result['zones']) > 0:
                         zones = result['zones']
                         parsing_method = result.get('parsing_method', 'enhanced')
                         st.success(f"✅ Parsed {len(zones)} zones using enhanced parser ({parsing_method})")
-                
+
                 # No fallbacks - real parsing only
                 if not zones:
                     st.error(f"Failed to parse {uploaded_file.name}. No valid zones detected.")
                     st.info("This file may be corrupted, empty, or in an unsupported format. Try the PDF converter for PDF files.")
                     return None
-                
+
                 # Cleanup temp file
                 try:
                     os.unlink(tmp_path)
                 except:
                     pass
-                
+
                 # Memory cleanup
                 gc.collect()
-                    
+
             except Exception as parse_error:
                 st.error(f"Parsing failed: {str(parse_error)}")
                 st.info("This file cannot be processed. Please check the file format or try the PDF converter.")
@@ -1161,7 +1149,7 @@ def load_sample_file(sample_path, selected_sample):
         # Try parsing the file
         parser = DWGParser()
         zones = parser.parse_file(sample_path)
-        
+
         if zones and len(zones) > 0:
             st.session_state.zones = zones
             st.session_state.file_loaded = True
@@ -1175,7 +1163,7 @@ def load_sample_file(sample_path, selected_sample):
             # Fallback to demo zones
             st.warning(f"Could not parse '{selected_sample}' - using demo zones for presentation")
             zones = RobustErrorHandler.create_default_zones(selected_sample, "Sample file fallback")
-            
+
             st.session_state.zones = zones
             st.session_state.file_loaded = True
             st.session_state.current_file = selected_sample
@@ -1183,11 +1171,11 @@ def load_sample_file(sample_path, selected_sample):
             st.session_state.analysis_results = {}
             st.session_state.analysis_complete = False
             return zones
-            
+
     except Exception as e:
         st.warning(f"Error loading '{selected_sample}': {str(e)[:50]}... - using demo zones")
         zones = RobustErrorHandler.create_default_zones(selected_sample, "Error fallback")
-        
+
         st.session_state.zones = zones
         st.session_state.file_loaded = True
         st.session_state.current_file = selected_sample
@@ -1269,14 +1257,14 @@ def display_main_interface(components):
             st.subheader("📤 Export & Reports")
             if st.session_state.analysis_results:
                 col1, col2 = st.columns(2)
-                
+
                 with col1:
                     st.write("**Quick Exports:**")
                     if st.button("📄 PDF Report", key="std_pdf_btn", use_container_width=True):
                         try:
                             export_manager = ExportManager()
                             pdf_data = export_manager.generate_pdf_report(st.session_state.zones, st.session_state.analysis_results)
-                            
+
                             st.download_button(
                                 "📥 Download PDF",
                                 data=pdf_data,
@@ -1287,10 +1275,10 @@ def display_main_interface(components):
                             )
                         except Exception as e:
                             st.error(f"PDF error: {str(e)}")
-                    
+
                     if st.button("📊 CSV Data", key="std_csv_btn", use_container_width=True):
                         export_statistics_csv()
-                
+
                 with col2:
                     st.write("**Comprehensive Report:**")
                     if st.button("📋 Full Report Package", key="std_full_report_btn", use_container_width=True):
@@ -1477,7 +1465,7 @@ def generate_simple_dxf(zones, include_furniture=True, include_dimensions=True):
         "0\nENDTAB\n0\nENDSEC\n",
         "0\nSECTION\n2\nENTITIES\n"
     ]
-    
+
     # Add room boundaries
     for i, zone in enumerate(zones):
         points = zone.get('points', [])
@@ -1490,13 +1478,13 @@ def generate_simple_dxf(zones, include_furniture=True, include_dimensions=True):
                 f"90\n{len(points)}\n",  # Number of vertices
                 "70\n1\n"      # Closed flag
             ])
-            
+
             for point in points:
                 dxf_content.extend([
                     f"10\n{point[0]:.3f}\n",  # X coordinate
                     f"20\n{point[1]:.3f}\n"   # Y coordinate
                 ])
-            
+
             # Add room label as text
             centroid = zone.get('centroid', (sum(p[0] for p in points)/len(points), sum(p[1] for p in points)/len(points)))
             room_name = zone.get('zone_type', f'Room {i+1}')
@@ -1508,7 +1496,7 @@ def generate_simple_dxf(zones, include_furniture=True, include_dimensions=True):
                 "40\n2.5\n",  # Text height
                 f"1\n{room_name}\n"
             ])
-            
+
             # Add dimensions if requested
             if include_dimensions:
                 area = zone.get('area', 0)
@@ -1520,7 +1508,7 @@ def generate_simple_dxf(zones, include_furniture=True, include_dimensions=True):
                     "40\n1.5\n",
                     f"1\n{area:.1f} m²\n"
                 ])
-    
+
     # Add furniture if requested
     if include_furniture and st.session_state.analysis_results:
         placements = st.session_state.analysis_results.get('placements', {})
@@ -1528,7 +1516,7 @@ def generate_simple_dxf(zones, include_furniture=True, include_dimensions=True):
             for furniture in furniture_list:
                 pos = furniture.get('position', (0, 0))
                 size = furniture.get('size', (2, 1.5))
-                
+
                 # Furniture rectangle
                 corners = [
                     (pos[0] - size[0]/2, pos[1] - size[1]/2),
@@ -1536,7 +1524,7 @@ def generate_simple_dxf(zones, include_furniture=True, include_dimensions=True):
                     (pos[0] + size[0]/2, pos[1] + size[1]/2),
                     (pos[0] - size[0]/2, pos[1] + size[1]/2)
                 ]
-                
+
                 dxf_content.extend([
                     "0\nLWPOLYLINE\n",
                     "8\nFURNITURE\n",
@@ -1544,13 +1532,13 @@ def generate_simple_dxf(zones, include_furniture=True, include_dimensions=True):
                     "90\n4\n",   # 4 vertices
                     "70\n1\n"    # Closed
                 ])
-                
+
                 for corner in corners:
                     dxf_content.extend([
                         f"10\n{corner[0]:.3f}\n",
                         f"20\n{corner[1]:.3f}\n"
                     ])
-    
+
     dxf_content.extend(["0\nENDSEC\n", "0\nEOF\n"])
     return ''.join(dxf_content)
 
@@ -1558,28 +1546,28 @@ def generate_simple_svg(zones, include_furniture=True):
     """Generate high-quality SVG content"""
     if not zones:
         return '<svg width="400" height="300" xmlns="http://www.w3.org/2000/svg"><text x="200" y="150" text-anchor="middle">No zones to export</text></svg>'
-    
+
     # Calculate bounds with padding
     all_points = []
     for zone in zones:
         all_points.extend(zone.get('points', []))
-    
+
     if not all_points:
         return '<svg width="400" height="300" xmlns="http://www.w3.org/2000/svg"><text x="200" y="150" text-anchor="middle">No valid points</text></svg>'
-    
+
     min_x = min(p[0] for p in all_points)
     max_x = max(p[0] for p in all_points)
     min_y = min(p[1] for p in all_points)
     max_y = max(p[1] for p in all_points)
-    
+
     width = max_x - min_x
     height = max_y - min_y
     padding = 50
     scale = min(800 / (width + 2*padding), 600 / (height + 2*padding)) if width > 0 and height > 0 else 1
-    
+
     svg_width = int((width + 2*padding) * scale)
     svg_height = int((height + 2*padding) * scale)
-    
+
     svg_content = f'''<svg width="{svg_width}" height="{svg_height}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {svg_width} {svg_height}">
 '''
     svg_content += '''<defs>
@@ -1591,7 +1579,7 @@ def generate_simple_svg(zones, include_furniture=True):
 </style>
 </defs>
 '''
-    
+
     # Add rooms
     for i, zone in enumerate(zones):
         points = zone.get('points', [])
@@ -1602,26 +1590,26 @@ def generate_simple_svg(zones, include_furniture=True):
                 x = (point[0] - min_x + padding) * scale
                 y = (point[1] - min_y + padding) * scale
                 transformed_points.append((x, y))
-            
+
             # Create path
             path_data = f"M {transformed_points[0][0]:.1f} {transformed_points[0][1]:.1f}"
             for point in transformed_points[1:]:
                 path_data += f" L {point[0]:.1f} {point[1]:.1f}"
             path_data += " Z"
-            
+
             svg_content += f'<path d="{path_data}" class="room"/>\n'
-            
+
             # Add room label
             centroid = zone.get('centroid', (sum(p[0] for p in points)/len(points), sum(p[1] for p in points)/len(points)))
             label_x = (centroid[0] - min_x + padding) * scale
             label_y = (centroid[1] - min_y + padding) * scale
-            
+
             room_name = zone.get('zone_type', f'Room {i+1}')
             area = zone.get('area', 0)
-            
+
             svg_content += f'<text x="{label_x:.1f}" y="{label_y:.1f}" class="room-label">{room_name}</text>\n'
             svg_content += f'<text x="{label_x:.1f}" y="{label_y + 15:.1f}" class="area-label">{area:.1f} m²</text>\n'
-    
+
     # Add furniture if requested
     if include_furniture and st.session_state.analysis_results:
         placements = st.session_state.analysis_results.get('placements', {})
@@ -1629,18 +1617,18 @@ def generate_simple_svg(zones, include_furniture=True):
             for furniture in furniture_list:
                 pos = furniture.get('position', (0, 0))
                 size = furniture.get('size', (2, 1.5))
-                
+
                 # Transform furniture position
                 x = (pos[0] - size[0]/2 - min_x + padding) * scale
                 y = (pos[1] - size[1]/2 - min_y + padding) * scale
                 w = size[0] * scale
                 h = size[1] * scale
-                
+
                 svg_content += f'<rect x="{x:.1f}" y="{y:.1f}" width="{w:.1f}" height="{h:.1f}" class="furniture"/>\n'
-    
+
     # Add title
     svg_content += f'<text x="{svg_width/2}" y="25" style="font-family: Arial, sans-serif; font-size: 16px; text-anchor: middle; fill: #2C3E50; font-weight: bold;">Architectural Plan Export</text>\n'
-    
+
     svg_content += '</svg>'
     return svg_content
 
@@ -1653,20 +1641,20 @@ def display_cad_export_interface(components):
         return
 
     st.subheader("📐 Professional CAD Export")
-    
+
     # Export options in a cleaner layout
     col1, col2, col3 = st.columns(3)
-    
+
     with col1:
         st.write("**Export Formats:**")
         export_dxf = st.checkbox("🔧 DXF (AutoCAD Compatible)", value=True, key="export_dxf_check")
         export_svg = st.checkbox("🖼️ SVG (High Quality Vector)", value=True, key="export_svg_check")
-    
+
     with col2:
         st.write("**Content Options:**")
         include_dimensions = st.checkbox("📏 Room Dimensions", value=True, key="export_include_dims")
         include_furniture = st.checkbox("🪑 Furniture Layout", value=True, key="export_include_furniture")
-    
+
     with col3:
         st.write("**Export Quality:**")
         st.info("✅ Professional Grade\n✅ CAD Compatible\n✅ Scalable Vector")
@@ -1675,7 +1663,7 @@ def display_cad_export_interface(components):
         try:
             # Professional CAD export
             col1, col2 = st.columns(2)
-            
+
             with col1:
                 if export_dxf:
                     dxf_content = generate_simple_dxf(st.session_state.zones, include_furniture, include_dimensions)
@@ -1688,7 +1676,7 @@ def display_cad_export_interface(components):
                         use_container_width=True
                     )
                     st.success("✅ DXF Ready - AutoCAD Compatible")
-            
+
             with col2:
                 if export_svg:
                     svg_content = generate_simple_svg(st.session_state.zones, include_furniture)
@@ -1701,10 +1689,10 @@ def display_cad_export_interface(components):
                         use_container_width=True
                     )
                     st.success("✅ SVG Ready - High Quality Vector")
-            
+
             if not export_dxf and not export_svg:
                 st.warning("Please select at least one export format.")
-            
+
         except Exception as e:
             st.error(f"Error generating CAD files: {str(e)}")
 
@@ -1728,12 +1716,12 @@ def display_advanced_settings(components):
             st.success("🔹 Google Gemini: ✅ Configured")
         else:
             st.error("🔹 Google Gemini: ❌ Not configured")
-            
+
         if openai_key:
             st.success("🔹 OpenAI GPT: ✅ Configured")
         else:
             st.info("🔹 OpenAI GPT: ❌ Not configured")
-            
+
         if anthropic_key:
             st.success("🔹 Anthropic Claude: ✅ Configured")
         else:
@@ -1834,7 +1822,7 @@ def display_advanced_settings(components):
             'compress_exports': compress_exports
         }
         st.success("Export settings saved!")
-    
+
     # Quick PDF Export
     st.divider()
     st.subheader("📄 Quick PDF Export")
@@ -1843,7 +1831,7 @@ def display_advanced_settings(components):
             try:
                 export_manager = ExportManager()
                 pdf_data = export_manager.generate_pdf_report(st.session_state.zones, st.session_state.analysis_results)
-                
+
                 st.download_button(
                     "Download PDF Report",
                     data=pdf_data,
@@ -1917,7 +1905,7 @@ def generate_comprehensive_report(components):
                     mime="text/csv")
 
             st.success("Comprehensive report package generated!")
-            
+
             # Add standalone PDF export button
             st.divider()
             st.subheader("📄 PDF Report Export")
@@ -1925,7 +1913,7 @@ def generate_comprehensive_report(components):
                 try:
                     export_manager = ExportManager()
                     pdf_data = export_manager.generate_pdf_report(st.session_state.zones, st.session_state.analysis_results)
-                    
+
                     st.download_button(
                         "📥 Download PDF Report",
                         data=pdf_data,
@@ -2791,7 +2779,7 @@ def display_plan_visualization():
 
     # Advanced visualization controls
     st.subheader("🎨 Professional Visualization Controls")
-    
+
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         view_mode = st.selectbox("View Mode", ["2D Professional", "3D Advanced Model"], key="adv_view_mode")
@@ -2819,13 +2807,13 @@ def display_plan_visualization():
         )
 
     st.plotly_chart(fig, use_container_width=True)
-    
+
     # Additional visualization options
     with st.expander("📊 Visualization Analytics"):
         if st.session_state.zones:
             total_area = sum(zone.get('area', 0) for zone in st.session_state.zones)
             avg_room_size = total_area / len(st.session_state.zones)
-            
+
             col1, col2, col3 = st.columns(3)
             with col1:
                 st.metric("Total Floor Area", f"{total_area:.1f} m²")
@@ -2896,13 +2884,13 @@ def display_advanced_options():
         with col3:
             if st.button("📄 Generate PDF Report", key="gen_pdf_btn"):
                 generate_pdf_report()
-                
+
         with col4:
             if st.button("📥 Quick PDF Export", key="quick_pdf_advanced_btn"):
                 try:
                     export_manager = ExportManager()
                     pdf_data = export_manager.generate_pdf_report(st.session_state.zones, st.session_state.analysis_results)
-                    
+
                     st.download_button(
                         "Download PDF",
                         data=pdf_data,
