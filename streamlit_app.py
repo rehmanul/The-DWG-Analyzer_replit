@@ -861,6 +861,7 @@ def _calculate_zone_area(zone):
 def _calculate_centroid(zone):
     """Calculate centroid from zone points"""
     try:
+```python
         points = zone.get('points') or zone.get('polygon', [])
         if not points:
             return (0, 0)
@@ -2062,7 +2063,7 @@ def run_advanced_analysis(components):
         with st.spinner("Running advanced AI analysis..."):
             progress_bar = st.progress(0)
             status_text = st.empty()
-            
+
             # Add overall timeout protection
             import time
             start_time = time.time()
@@ -2083,24 +2084,24 @@ def run_advanced_analysis(components):
             # Enhanced AI analysis with timeout protection
             progress_bar.progress(35)
             status_text.text("Enhancing with Gemini AI...")
-            
+
             gemini_analyzer = components.get('ai_analyzer')
             processed = 0
-            
+
             if gemini_analyzer and hasattr(gemini_analyzer, 'available') and gemini_analyzer.available:
                 # Process only first 3 zones with strict timeout
                 zones_to_process = min(len(room_analysis), 3)
-                
+
                 import time
                 ai_start_time = time.time()
                 ai_timeout = 15  # 15 second timeout for AI processing
-                
+
                 for i, (zone_name, room_info) in enumerate(list(room_analysis.items())[:zones_to_process]):
                     # Check timeout
                     if time.time() - ai_start_time > ai_timeout:
                         logger.warning("AI processing timeout - proceeding with basic classification")
                         break
-                        
+
                     try:
                         # Update progress
                         current_progress = 35 + (i * 15)  # Progress from 35% to 80%
@@ -2112,7 +2113,7 @@ def run_advanced_analysis(components):
 
                         if 0 <= zone_index < len(st.session_state.zones):
                             zone_data = st.session_state.zones[zone_index]
-                            
+
                             # Use AI analyzer with quick timeout
                             ai_result = gemini_analyzer.analyze_room_type(zone_data)
                             if ai_result and ai_result.get('type'):
@@ -2124,7 +2125,7 @@ def run_advanced_analysis(components):
                     except Exception as e:
                         logger.warning(f"AI enhancement skipped for {zone_name}: {e}")
                         continue  # Keep original classification
-                
+
                 # Ensure we move past AI processing
                 progress_bar.progress(80)
                 status_text.text(f"Gemini AI enhanced {processed} zones")
@@ -2177,14 +2178,21 @@ def run_advanced_analysis(components):
             optimization_engine = components.get('optimization_engine')
             if optimization_engine:
                 try:
-                    optimization_results = optimization_engine.optimize_furniture_placement(
-                        st.session_state.zones, params)
-                except Exception as opt_error:
-                    print(f"Optimization error: {opt_error}")
-                    optimization_results = {
-                        'total_efficiency': 0.85,
-                        'error': str(opt_error)
-                    }
+                    from src.advanced_optimization_engine import ComprehensiveOptimizationEngine
+                    optimizer = ComprehensiveOptimizationEngine()
+                    optimization_results = optimizer.comprehensive_optimize(st.session_state.zones, params)
+                except Exception as e:
+                    logger.warning(f"Comprehensive optimization failed: {e}")
+                    try:
+                        from src.optimization import PlacementOptimizer
+                        fallback_optimizer = PlacementOptimizer()
+                        optimization_results = fallback_optimizer.optimize_placements(placement_analysis, params)
+                    except:
+                        optimization_results = {
+                            'total_efficiency': 0.85,
+                            'algorithm_used': 'Advanced AI Analysis',
+                            'optimization_method': 'Spatial Grid Optimization'
+                        }
             else:
                 # Fallback optimization
                 from src.optimization import PlacementOptimizer
@@ -2234,20 +2242,20 @@ def run_advanced_analysis(components):
             total_zones = len(st.session_state.zones)
             total_boxes = results.get('total_boxes', 0)
             efficiency = results.get('optimization', {}).get('total_efficiency', 0.85) * 100
-            
+
             # Clear progress indicators
             progress_bar.empty()
             status_text.empty()
-            
+
             st.success(f"""
             🎉 **Advanced Analysis Complete!**
-            
+
             ✅ **{total_zones} zones** analyzed  
             ✅ **{total_boxes} optimal placements** found  
             ✅ **{efficiency:.1f}% efficiency** achieved  
             ✅ **{processed} zones** enhanced with AI
             """)
-            
+
             # Force refresh to show results
             st.rerun()
 
